@@ -1,17 +1,19 @@
-import React from 'react';
-import { Outlet, Link, NavLink } from 'react-router-dom';
+import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Package, 
   ShoppingCart, 
   FileCheck, 
-  Store, 
   LogOut, 
   Bell, 
   ExternalLink 
 } from 'lucide-react';
+import { useAuth } from '../context/authState';
 
 export default function SellerLayout() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex antialiased">
       {/* Fixed Operations Sidebar */}
@@ -19,11 +21,9 @@ export default function SellerLayout() {
         <div className="flex flex-col">
           {/* Sidebar Brand Header */}
           <div className="h-16 px-6 flex items-center gap-3 border-b border-slate-100">
-            <div className="w-8 h-8 rounded-lg bg-teal-700 flex items-center justify-center text-white font-bold text-sm">
-              SB
-            </div>
+            <img src="/logo.png" alt="" className="h-10 w-8 object-contain" />
             <div>
-              <span className="font-bold text-slate-900 tracking-tight text-sm">Operations Hub</span>
+              <span className="block font-extrabold text-slate-900 tracking-tight text-sm">shusthoBazaar</span>
               <span className="block text-[10px] text-teal-700 font-semibold">Seller Console</span>
             </div>
           </div>
@@ -67,12 +67,20 @@ export default function SellerLayout() {
               AI
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-slate-900 truncate">Dr. Aminul Islam</p>
-              <p className="text-[10px] text-slate-500 truncate">Lazz Pharma Dhanmondi</p>
+              <p className="text-xs font-bold text-slate-900 truncate">{user?.name}</p>
+              <p className="text-[10px] text-slate-500 truncate">{user?.storeName || 'Platform administration'}</p>
             </div>
-            <Link to="/" title="Exit to Customer Portal" className="text-slate-400 hover:text-slate-700 transition-colors">
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                navigate('/login', { replace: true });
+              }}
+              title="Sign out"
+              className="text-slate-400 transition-colors hover:text-slate-700"
+            >
               <LogOut className="w-4 h-4" />
-            </Link>
+            </button>
           </div>
         </div>
       </aside>
@@ -84,7 +92,7 @@ export default function SellerLayout() {
           <div className="flex items-center gap-2 text-xs text-slate-600 font-medium">
             <span className="h-2 w-2 rounded-full bg-teal-600"></span>
             <span>Active Pharmacy Node:</span>
-            <strong className="text-slate-900">Central Gulshan Hub (DGDA-01)</strong>
+            <strong className="text-slate-900">{user?.storeName || 'ShusthoBazaar Platform Admin'}</strong>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/" className="text-xs font-semibold text-teal-700 hover:underline flex items-center gap-1">

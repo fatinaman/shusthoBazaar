@@ -352,6 +352,7 @@ Prescription verification is simulated in the frontend MVP and must not be treat
 | `/products/:id` | Product Details |
 | `/cart` | Shopping Cart |
 | `/checkout` | Checkout Flow |
+| `/orders` | Customer Order History |
 | `/orders/:id` | Order Details & Tracking |
 | `/orders/:id/invoice` | Digital Invoice |
 

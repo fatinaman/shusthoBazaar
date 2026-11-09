@@ -10,7 +10,7 @@ export const initialProducts = [
     sellerId: "s001",
     sellerName: "Gulshan Central Pharmacy",
     requiresPrescription: false,
-    image: "src/images/napa-extra-paracetamol-box-and-tablet-strip.webp",
+    image: "/images/napa-extra-paracetamol-box-and-tablet-strip.webp",
     isAvailable: true,
   },
   {
@@ -24,7 +24,7 @@ export const initialProducts = [
     sellerId: "s002",
     sellerName: "Lazz Pharma (Dhanmondi)",
     requiresPrescription: true,
-    image: "src/images/Seclo-20-20mg-300x300.webp",
+    image: "/images/Seclo-20-20mg-300x300.webp",
     isAvailable: true,
   },
   {
@@ -38,7 +38,7 @@ export const initialProducts = [
     sellerId: "s003",
     sellerName: "Tamanna Pharmacy",
     requiresPrescription: true,
-    image: "src/images/Monas-10-mg-Tab-600x600w.jpg.webp",
+    image: "/images/Monas-10-mg-Tab-600x600w.jpg.webp",
     isAvailable: true,
   },
   {
@@ -52,7 +52,7 @@ export const initialProducts = [
     sellerId: "s002",
     sellerName: "Lazz Pharma (Dhanmondi)",
     requiresPrescription: false,
-    image: "src/images/UOl4mayzRy3e1bz91Q4h4rqSxeIkw2WgrVWJ4cxk.webp",
+    image: "/images/UOl4mayzRy3e1bz91Q4h4rqSxeIkw2WgrVWJ4cxk.webp",
     isAvailable: true,
   },
 ];

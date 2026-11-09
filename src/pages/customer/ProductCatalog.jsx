@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
-import { initialProducts } from '../../data/seed';
+import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../../components/customer/ProductCard';
-import { Search, Filter, ShieldCheck } from 'lucide-react';
+import { Search, ShieldCheck } from 'lucide-react';
+import { useProducts } from '../../context/productState';
 
 export default function ProductCatalog() {
-  const [products] = useState(initialProducts);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { products } = useProducts();
+  const searchQuery = searchParams.get('search') || '';
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [sortOrder, setSortOrder] = useState('featured');
 
   // Filter products based on search and category
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = products.filter((product) => product.isAvailable && product.stock > 0).filter((product) => {
     const matchesSearch = 
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.generic.toLowerCase().includes(searchQuery.toLowerCase());
@@ -18,6 +21,10 @@ export default function ProductCatalog() {
       selectedCategory === 'All' || product.category.toLowerCase().includes(selectedCategory.toLowerCase());
 
     return matchesSearch && matchesCategory;
+  }).sort((a, b) => {
+    if (sortOrder === 'price-low') return a.price - b.price;
+    if (sortOrder === 'price-high') return b.price - a.price;
+    return 0;
   });
 
   return (
@@ -42,7 +49,15 @@ export default function ProductCatalog() {
             type="text"
             placeholder="Search medicine or generic formula..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSearchParams((current) => {
+                const next = new URLSearchParams(current);
+                if (value.trim()) next.set('search', value);
+                else next.delete('search');
+                return next;
+              }, { replace: true });
+            }}
             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600"
           />
         </div>
@@ -63,6 +78,18 @@ export default function ProductCatalog() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-slate-600">{filteredProducts.length} medicines available</p>
+        <label className="flex items-center gap-2 text-sm text-slate-600">
+          Sort by
+          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 font-medium text-slate-800 outline-none focus:border-teal-600">
+            <option value="featured">Featured</option>
+            <option value="price-low">Price: Low to high</option>
+            <option value="price-high">Price: High to low</option>
+          </select>
+        </label>
       </div>
 
       {/* Product Grid */}
