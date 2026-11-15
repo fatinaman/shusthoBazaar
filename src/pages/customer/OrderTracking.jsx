@@ -1,21 +1,7 @@
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { CheckCircle2, Clock3, MapPin, PackageCheck, Truck } from 'lucide-react';
-import { getDemoOrders } from '../../data/orders';
-
-const defaultOrder = {
-  id: 'SB-89241',
-  customer: 'Dr. Aminul Islam',
-  address: 'House 42, Road 11, Banani, Dhaka',
-  paymentMethod: 'Cash on Delivery',
-  paymentStatus: 'Pending',
-  total: 500,
-  status: 'Confirmed',
-  createdAt: '2026-11-09T12:00:00Z',
-  items: [
-    { name: 'Napa Extra', quantity: 2, price: 35 },
-    { name: 'Seclo 20mg', quantity: 1, price: 70 },
-  ],
-};
+import { api } from '../../services/api';
 
 const steps = [
   { key: 'Placed', label: 'Placed', icon: Clock3 },
@@ -26,14 +12,26 @@ const steps = [
 
 export default function OrderTracking() {
   const { id } = useParams();
-  const savedOrder = getDemoOrders().find((entry) => entry.id === id);
-  const order = savedOrder || (id === defaultOrder.id ? defaultOrder : null);
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.orders.get(id)
+      .then(setOrder)
+      .catch((requestError) => setError(requestError.message))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return <p role="status" className="p-12 text-center text-sm text-slate-600">Loading order…</p>;
+  }
 
   if (!order) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center">
         <h1 className="text-2xl font-bold text-slate-900">Order not found</h1>
-        <p className="mt-2 text-slate-600">This order is not available in the current demo account.</p>
+        <p className="mt-2 text-slate-600">{error || 'This order is not available in your account.'}</p>
         <Link to="/products" className="mt-5 inline-flex rounded-xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white">Browse medicines</Link>
       </div>
     );
@@ -43,10 +41,8 @@ export default function OrderTracking() {
     ? order.address
     : [order.address?.street, order.address?.city, order.address?.postalCode].filter(Boolean).join(', ');
 
-  const currentIndex = steps.findIndex((step) => step.key === order.status);
-  const statusIndex = currentIndex >= 0 ? currentIndex : 0;
+  const completedStatuses = new Set(order.statusHistory.map((entry) => entry.status));
   const isRejected = order.status === 'Rejected';
-
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -64,7 +60,7 @@ export default function OrderTracking() {
           <div className="grid gap-4 md:grid-cols-4">
             {steps.map((step, index) => {
               const Icon = step.icon;
-              const active = !isRejected && index <= statusIndex;
+              const active = !isRejected && completedStatuses.has(step.key);
 
               return (
                 <div key={step.key} className="flex items-center gap-3">
@@ -91,6 +87,12 @@ export default function OrderTracking() {
               </div>
             </div>
             <p className="mt-4 text-sm text-slate-600">Estimated delivery: 12:30 PM today</p>
+              {error && <p role="alert" className="mt-3 text-sm text-rose-700">{error}</p>}
+            {order.payment.status === 'failed' && order.payment.method === 'mock' && (
+              <Link to={`/payment?checkoutReference=${encodeURIComponent(order.payment.checkoutReference)}`} className="mt-4 inline-flex rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white">
+                Retry mock payment
+              </Link>
+            )}
           </div>
 
           <div className="mt-8">
@@ -120,7 +122,7 @@ export default function OrderTracking() {
                 <MapPin className="mt-0.5 h-4 w-4 text-teal-700" />
                 <div>
                   <p className="font-semibold text-slate-900">Delivery address</p>
-                  <p>{address || defaultOrder.address}</p>
+                  <p>{address}</p>
                 </div>
               </div>
               <div>
@@ -129,7 +131,7 @@ export default function OrderTracking() {
               </div>
               <div>
                 <p className="font-semibold text-slate-900">Placed on</p>
-                <p>{new Date(order.createdAt || defaultOrder.createdAt).toLocaleString()}</p>
+                <p>{new Date(order.createdAt).toLocaleString()}</p>
               </div>
             </div>
           </div>

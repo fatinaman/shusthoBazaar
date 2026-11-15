@@ -1,0 +1,160 @@
+@baseUrl = http://localhost:3001/api
+@customerCookie = sb_session=replace-with-cookie-from-login
+@sellerCookie = sb_session=replace-with-seller-cookie
+@adminCookie = sb_session=replace-with-admin-cookie
+@productId = p001
+@addressId = addr-1
+@orderId = SB-000001
+@checkoutReference = SB-CHECKOUT-00000000-0000-0000-0000-000000000000
+
+### Health
+GET {{baseUrl}}/health
+
+### Register customer
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "API Test Customer",
+  "email": "api-customer@example.test",
+  "password": "CustomerPassword123"
+}
+
+### Login customer (copy sb_session from Set-Cookie into @customerCookie)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "customer@shusthobazaar.demo",
+  "password": "Customer123!"
+}
+
+### Current session
+GET {{baseUrl}}/auth/me
+Cookie: {{customerCookie}}
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Cookie: {{customerCookie}}
+
+### Catalogue
+GET {{baseUrl}}/products?q=omeprazole&category=Gastric&page=1&limit=10
+
+### Product detail
+GET {{baseUrl}}/products/{{productId}}
+
+### Categories
+GET {{baseUrl}}/categories
+
+### Read active cart
+GET {{baseUrl}}/cart
+Cookie: {{customerCookie}}
+
+### Add cart item
+POST {{baseUrl}}/cart/items
+Cookie: {{customerCookie}}
+Content-Type: application/json
+
+{
+  "productId": "{{productId}}",
+  "quantity": 2
+}
+
+### Update cart quantity
+PATCH {{baseUrl}}/cart/items/{{productId}}
+Cookie: {{customerCookie}}
+Content-Type: application/json
+
+{
+  "quantity": 3
+}
+
+### Remove cart item
+DELETE {{baseUrl}}/cart/items/{{productId}}
+Cookie: {{customerCookie}}
+
+### Apply coupon
+POST {{baseUrl}}/cart/coupon
+Cookie: {{customerCookie}}
+Content-Type: application/json
+
+{
+  "code": "WELCOME10"
+}
+
+### Remove coupon
+DELETE {{baseUrl}}/cart/coupon
+Cookie: {{customerCookie}}
+
+### Clear cart
+DELETE {{baseUrl}}/cart
+Cookie: {{customerCookie}}
+
+### List saved addresses
+GET {{baseUrl}}/addresses
+Cookie: {{customerCookie}}
+
+### Add address
+POST {{baseUrl}}/addresses
+Cookie: {{customerCookie}}
+Content-Type: application/json
+
+{
+  "label": "Home",
+  "recipient": "Aminul Islam",
+  "phone": "01712345678",
+  "street": "House 42, Road 11, Banani",
+  "city": "Dhaka",
+  "postalCode": "1213"
+}
+
+### Checkout with Cash on Delivery
+POST {{baseUrl}}/checkout
+Cookie: {{customerCookie}}
+Content-Type: application/json
+
+{
+  "addressId": "{{addressId}}",
+  "paymentMethod": "cod"
+}
+
+### Checkout with a persisted local mock payment (copy checkoutReference from response)
+POST {{baseUrl}}/checkout
+Cookie: {{customerCookie}}
+Content-Type: application/json
+
+{
+  "addressId": "{{addressId}}",
+  "paymentMethod": "mock"
+}
+
+### Complete mock payment (success or failed)
+POST {{baseUrl}}/payments/mock/complete
+Cookie: {{customerCookie}}
+Content-Type: application/json
+
+{
+  "checkoutReference": "{{checkoutReference}}",
+  "result": "success"
+}
+
+### List my orders
+GET {{baseUrl}}/orders
+Cookie: {{customerCookie}}
+
+### Order details and status history
+GET {{baseUrl}}/orders/{{orderId}}
+Cookie: {{customerCookie}}
+
+### Advance order status (use seller or admin cookie; valid transitions only)
+PATCH {{baseUrl}}/orders/{{orderId}}/status
+Cookie: {{sellerCookie}}
+Content-Type: application/json
+
+{
+  "status": "confirmed"
+}
+
+### Get/generate invoice JSON
+GET {{baseUrl}}/orders/{{orderId}}/invoice
+Cookie: {{customerCookie}}

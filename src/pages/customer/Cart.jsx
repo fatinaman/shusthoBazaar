@@ -1,12 +1,39 @@
 import { Link } from 'react-router-dom';
 import { Trash2, ShoppingBag, ArrowRight, Truck } from 'lucide-react';
+import { useState } from 'react';
 import { useCart } from '../../context/cartState';
 
 export default function Cart() {
-  const { cartItems, removeFromCart, updateQuantity, subtotal, clearCart } = useCart();
+  const {
+    cartItems,
+    removeFromCart,
+    updateQuantity,
+    subtotal,
+    discount,
+    couponCode,
+    shippingFee,
+    total,
+    clearCart,
+    applyCoupon,
+    removeCoupon,
+    loading,
+    error: cartError,
+  } = useCart();
+  const [couponInput, setCouponInput] = useState('');
+  const [error, setError] = useState('');
 
-  const deliveryFee = cartItems.length > 0 ? 60 : 0;
-  const grandTotal = subtotal + deliveryFee;
+  const runAction = async (action) => {
+    try {
+      await action();
+      setError('');
+    } catch (requestError) {
+      setError(requestError.message);
+    }
+  };
+
+  if (loading) {
+    return <div className="p-12 text-center text-sm text-slate-600" role="status">Loading your cart…</div>;
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -38,7 +65,7 @@ export default function Cart() {
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
             <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <span className="font-bold text-sm text-slate-900">Medicine Items ({cartItems.length})</span>
-              <button onClick={clearCart} className="text-xs font-semibold text-rose-600 hover:underline">
+              <button onClick={() => runAction(clearCart)} className="text-xs font-semibold text-rose-600 hover:underline">
                 Clear Cart
               </button>
             </div>
@@ -61,11 +88,11 @@ export default function Cart() {
 
                   <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
                     <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden bg-slate-50">
-                      <button aria-label={`Decrease ${item.name} quantity`} onClick={() => updateQuantity(item.id, item.quantity - 1)} className="px-3 py-1.5 text-slate-600 hover:bg-slate-200 font-bold transition-colors">
+                      <button aria-label={`Decrease ${item.name} quantity`} onClick={() => runAction(() => updateQuantity(item.id, item.quantity - 1))} className="px-3 py-1.5 text-slate-600 hover:bg-slate-200 font-bold transition-colors">
                         -
                       </button>
                       <span className="px-3 py-1.5 font-mono text-xs font-semibold text-slate-900 bg-white">{item.quantity}</span>
-                      <button aria-label={`Increase ${item.name} quantity`} disabled={item.quantity >= item.stock} onClick={() => updateQuantity(item.id, item.quantity + 1)} className="px-3 py-1.5 text-slate-600 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-40 font-bold transition-colors">
+                      <button aria-label={`Increase ${item.name} quantity`} disabled={item.quantity >= item.stock} onClick={() => runAction(() => updateQuantity(item.id, item.quantity + 1))} className="px-3 py-1.5 text-slate-600 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-40 font-bold transition-colors">
                         +
                       </button>
                     </div>
@@ -75,7 +102,7 @@ export default function Cart() {
                       <p className="text-[10px] text-slate-400">৳{item.price} each</p>
                     </div>
 
-                    <button onClick={() => removeFromCart(item.id)} className="p-2 text-slate-400 hover:text-rose-600 transition-colors" title="Remove Item">
+                    <button onClick={() => runAction(() => removeFromCart(item.id))} className="p-2 text-slate-400 hover:text-rose-600 transition-colors" title="Remove Item">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -103,13 +130,35 @@ export default function Cart() {
               </div>
               <div className="flex items-center justify-between text-slate-600">
                 <span>Express Delivery (Dhaka)</span>
-                <span className="font-semibold text-slate-900">৳{deliveryFee}</span>
+                <span className="font-semibold text-slate-900">৳{shippingFee}</span>
               </div>
+              {discount > 0 && <div className="flex items-center justify-between text-emerald-700"><span>Coupon {couponCode}</span><span className="font-semibold">−৳{discount}</span></div>}
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-base font-bold text-slate-900">
                 <span>Total Amount</span>
-                <span className="text-teal-700 text-xl">৳{grandTotal}</span>
+                <span className="text-teal-700 text-xl">৳{total}</span>
               </div>
             </div>
+
+            <div className="mb-5">
+              {couponCode ? (
+                <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                  <span>Coupon {couponCode} applied</span>
+                  <button type="button" onClick={() => runAction(removeCoupon)} className="font-semibold underline">Remove</button>
+                </div>
+              ) : (
+                <form onSubmit={(event) => {
+                  event.preventDefault();
+                  runAction(async () => {
+                    await applyCoupon(couponInput);
+                    setCouponInput('');
+                  });
+                }} className="flex gap-2">
+                  <input aria-label="Coupon code" value={couponInput} onChange={(event) => setCouponInput(event.target.value)} placeholder="Coupon code" className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                  <button type="submit" className="rounded-lg border border-teal-700 px-3 py-2 text-sm font-semibold text-teal-700">Apply</button>
+                </form>
+              )}
+            </div>
+            {(error || cartError) && <p role="alert" className="mb-4 text-sm text-rose-700">{error || cartError}</p>}
 
             <Link
               to="/checkout"

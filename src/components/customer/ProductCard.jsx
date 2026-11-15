@@ -1,18 +1,31 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Camera, Store, Check } from 'lucide-react';
 import { useCart } from '../../context/cartState';
+import { useAuth } from '../../context/authState';
 
 export default function ProductCard({ product }) {
   const { addToCart, cartItems } = useCart();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [added, setAdded] = useState(false);
+  const [error, setError] = useState('');
   const cartItem = cartItems.find((item) => item.id === product.id);
   const atStockLimit = cartItem?.quantity >= product.stock;
 
-  const handleAddToCart = () => {
-    if (addToCart(product)) {
-      setAdded(true);
-      window.setTimeout(() => setAdded(false), 1600);
+  const handleAddToCart = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    try {
+      if (await addToCart(product)) {
+        setError('');
+        setAdded(true);
+        window.setTimeout(() => setAdded(false), 1600);
+      }
+    } catch (requestError) {
+      setError(requestError.message);
     }
   };
 
@@ -88,6 +101,7 @@ export default function ProductCard({ product }) {
           </button>
         </div>
       </div>
+      {error && <p role="alert" className="mt-2 text-xs text-rose-700">{error}</p>}
     </div>
   );
 }

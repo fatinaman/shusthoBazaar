@@ -11,13 +11,15 @@ const landingByRole = {
 };
 
 export default function Login() {
-  const { user, login } = useAuth();
+  const { user, loading, login } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
+  if (loading) return <main className="p-8 text-center text-sm text-slate-600">Loading your account…</main>;
   if (user) return <Navigate to={landingByRole[user.role]} replace />;
 
   const fillAccount = (account) => {
@@ -26,9 +28,11 @@ export default function Login() {
     setError('');
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    const result = login(email, password);
+    setSubmitting(true);
+    const result = await login(email, password);
+    setSubmitting(false);
     if (!result.success) {
       setError(result.error);
       return;
@@ -90,8 +94,8 @@ export default function Login() {
               />
             </div>
             {error && <p role="alert" className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">{error}</p>}
-            <button type="submit" className="w-full rounded-xl bg-teal-700 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-teal-800">
-              Sign in
+            <button type="submit" disabled={submitting} className="w-full rounded-xl bg-teal-700 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-teal-800 disabled:opacity-60">
+              {submitting ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
 

@@ -6,7 +6,7 @@ import { useAuth } from "../context/authState";
 
 export default function CustomerLayout() {
   const { totalItems, subtotal } = useCart();
-  const { user, logout } = useAuth();
+  const { user, logout, error: authError } = useAuth();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
 
@@ -32,6 +32,7 @@ export default function CustomerLayout() {
             <span className="text-slate-300">•</span>
             <span>Express Medicine Dispatch in 90 Mins across Dhaka</span>
           </div>
+          {authError && <p role="alert" className="bg-rose-50 px-4 py-2 text-center text-xs text-rose-700">{authError}</p>}
           <div className="flex items-center gap-4 text-slate-600">
             <div className="flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5 text-teal-600" />

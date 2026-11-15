@@ -6,7 +6,7 @@ import { useProducts } from '../../context/productState';
 
 export default function ProductCatalog() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { products } = useProducts();
+  const { products, loading, error } = useProducts();
   const searchQuery = searchParams.get('search') || '';
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortOrder, setSortOrder] = useState('featured');
@@ -93,7 +93,11 @@ export default function ProductCatalog() {
       </div>
 
       {/* Product Grid */}
-      {filteredProducts.length > 0 ? (
+      {error ? (
+        <div role="alert" className="rounded-xl bg-rose-50 p-5 text-sm text-rose-700">{error}</div>
+      ) : loading ? (
+        <p role="status" className="text-sm text-slate-600">Loading medicines…</p>
+      ) : filteredProducts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />

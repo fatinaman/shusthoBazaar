@@ -11,7 +11,7 @@ import Checkout from '../pages/customer/Checkout';
 import OrderTracking from '../pages/customer/OrderTracking';
 import OrderHistory from '../pages/customer/OrderHistory';
 import Invoice from '../pages/customer/Invoice';
-import PaymentSandbox, { PaymentReturn } from '../pages/customer/PaymentSandbox';
+import PaymentSandbox from '../pages/customer/PaymentSandbox';
 import Login from '../pages/Login';
 
 import SellerDashboard from '../pages/seller/SellerDashboard';
@@ -31,13 +31,12 @@ export default function AppRoutes() {
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<ProductCatalog />} />
           <Route path="/products/:id" element={<ProductDetails />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<ProtectedRoute allowedRoles={['customer', 'admin']}><Checkout /></ProtectedRoute>} />
+          <Route path="/cart" element={<ProtectedRoute allowedRoles={['customer']}><Cart /></ProtectedRoute>} />
+          <Route path="/checkout" element={<ProtectedRoute allowedRoles={['customer']}><Checkout /></ProtectedRoute>} />
           <Route path="/orders" element={<ProtectedRoute allowedRoles={['customer', 'admin']}><OrderHistory /></ProtectedRoute>} />
           <Route path="/orders/:id" element={<ProtectedRoute allowedRoles={['customer', 'admin']}><OrderTracking /></ProtectedRoute>} />
           <Route path="/orders/:id/invoice" element={<ProtectedRoute allowedRoles={['customer', 'admin']}><Invoice /></ProtectedRoute>} />
-          <Route path="/payment" element={<ProtectedRoute allowedRoles={['customer', 'admin']}><PaymentSandbox /></ProtectedRoute>} />
-          <Route path="/payment/return" element={<ProtectedRoute allowedRoles={['customer', 'admin']}><PaymentReturn /></ProtectedRoute>} />
+          <Route path="/payment" element={<ProtectedRoute allowedRoles={['customer']}><PaymentSandbox /></ProtectedRoute>} />
         </Route>
 
         <Route element={<ProtectedRoute allowedRoles={['seller', 'admin']}><SellerLayout /></ProtectedRoute>}>

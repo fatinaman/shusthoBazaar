@@ -1,23 +1,31 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Store, ShieldCheck, ArrowLeft, Camera, Check } from 'lucide-react';
 import { useCart } from '../../context/cartState';
 import { useProducts } from '../../context/productState';
+import { useAuth } from '../../context/authState';
 
 export default function ProductDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { addToCart } = useCart();
-  const { products } = useProducts();
+  const { user } = useAuth();
+  const { products, loading, error: catalogueError } = useProducts();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [error, setError] = useState('');
 
   const product = products.find((p) => p.id === id && p.isAvailable && p.stock > 0);
+
+  if (loading) {
+    return <p role="status" className="p-12 text-center text-sm text-slate-600">Loading medicine…</p>;
+  }
 
   if (!product) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-16 text-center">
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Product Not Found</h2>
-        <p className="text-slate-600 mb-6">The medicine you are looking for does not exist or has been removed.</p>
+        <p className="text-slate-600 mb-6">{catalogueError || 'The medicine you are looking for does not exist or has been removed.'}</p>
         <Link to="/products" className="px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-semibold">
           Back to Catalog
         </Link>
@@ -25,10 +33,19 @@ export default function ProductDetails() {
     );
   }
 
-  const handleAddToCart = () => {
-    addToCart(product, quantity);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+  const handleAddToCart = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    try {
+      await addToCart(product, quantity);
+      setError('');
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
   return (
@@ -85,6 +102,7 @@ export default function ProductDetails() {
                 +
               </button>
             </div>
+            {error && <p role="alert" className="mt-3 text-sm text-rose-700">{error}</p>}
 
             <button
               onClick={handleAddToCart}

@@ -1,73 +1,96 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CartContext } from './cartState';
-const STORAGE_KEY = 'shusthobazaar_cart';
+import { useAuth } from './authState';
+import { api } from '../services/api';
 
-function getStoredCart() {
-  if (typeof window === 'undefined') return [];
-  try {
-    const items = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || '[]');
-    return Array.isArray(items) ? items : [];
-  } catch (error) {
-    console.error('Unable to restore the saved cart.', error);
-    window.localStorage.removeItem(STORAGE_KEY);
-    return [];
-  }
-}
+const EMPTY_CART = { items: [], subtotal: 0, totalItems: 0, shippingFee: 0, discount: 0, total: 0, couponCode: null };
 
 export function CartProvider({ children }) {
-  const [cartItems, setCartItems] = useState(getStoredCart);
+  const { user } = useAuth();
+  const [savedCart, setSavedCart] = useState(EMPTY_CART);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const refreshCart = useCallback(async () => {
+    if (user?.role !== 'customer') {
+      return;
+    }
+    setLoading(true);
+    try {
+      setSavedCart(await api.cart.get());
+      setError('');
+    } catch (requestError) {
+      setError(requestError.message);
+      throw requestError;
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.role]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cartItems));
-    }
-  }, [cartItems]);
+    let active = true;
+    if (user?.role !== 'customer') return undefined;
+    api.cart.get()
+      .then((nextCart) => {
+        if (active) {
+          setSavedCart(nextCart);
+          setError('');
+        }
+      })
+      .catch((requestError) => { if (active) setError(requestError.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [user?.id, user?.role]);
 
-  const addToCart = useCallback((product, quantity = 1) => {
+  const addToCart = useCallback(async (product, quantity = 1) => {
     if (!product.isAvailable || product.stock < 1) return false;
-    setCartItems((prevItems) => {
-      const existingIndex = prevItems.findIndex((item) => item.id === product.id);
-      if (existingIndex > -1) {
-        return prevItems.map((item, index) =>
-          index === existingIndex
-            ? { ...item, quantity: Math.min(item.quantity + quantity, product.stock) }
-            : item,
-        );
-      }
-      return [...prevItems, { ...product, quantity: Math.min(quantity, product.stock) }];
-    });
+    setSavedCart(await api.cart.add({ productId: product.id, quantity }));
     return true;
   }, []);
 
-  const removeFromCart = useCallback((id) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
+  const removeFromCart = useCallback(async (id) => {
+    setSavedCart(await api.cart.remove(id));
   }, []);
 
-  const updateQuantity = useCallback((id, quantity) => {
+  const updateQuantity = useCallback(async (id, quantity) => {
     if (quantity <= 0) {
-      removeFromCart(id);
+      await removeFromCart(id);
       return;
     }
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === id ? { ...item, quantity: Math.min(quantity, item.stock) } : item,
-      ),
-    );
+    setSavedCart(await api.cart.update(id, { quantity }));
   }, [removeFromCart]);
 
-  const clearCart = useCallback(() => setCartItems([]), []);
+  const applyCoupon = useCallback(async (code) => {
+    setSavedCart(await api.cart.applyCoupon({ code }));
+  }, []);
 
-  const subtotal = useMemo(() => cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0), [cartItems]);
-  const totalItems = useMemo(() => cartItems.reduce((acc, item) => acc + item.quantity, 0), [cartItems]);
+  const removeCoupon = useCallback(async () => {
+    setSavedCart(await api.cart.removeCoupon());
+  }, []);
+
+  const clearCart = useCallback(async () => {
+    if (user?.role === 'customer') setSavedCart(await api.cart.clear());
+  }, [user?.role]);
+
+  const cart = user?.role === 'customer' ? savedCart : EMPTY_CART;
   const value = useMemo(() => ({
-    cartItems,
+    cartItems: cart.items,
     addToCart,
     removeFromCart,
     updateQuantity,
+    applyCoupon,
+    removeCoupon,
     clearCart,
-    subtotal,
-    totalItems,
-  }), [cartItems, addToCart, removeFromCart, updateQuantity, clearCart, subtotal, totalItems]);
+    refreshCart,
+    loading,
+    error,
+    subtotal: cart.subtotal,
+    discount: cart.discount,
+    couponCode: cart.couponCode,
+    shippingFee: cart.shippingFee,
+    total: cart.total,
+    totalItems: cart.totalItems,
+  }), [cart, addToCart, removeFromCart, updateQuantity, applyCoupon, removeCoupon, clearCart, refreshCart, loading, error]);
 
   return (
     <CartContext.Provider value={value}>{children}</CartContext.Provider>

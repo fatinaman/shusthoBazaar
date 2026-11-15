@@ -1,43 +1,39 @@
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Printer, Download } from 'lucide-react';
-import { getDemoOrders } from '../../data/orders';
-
-const defaultInvoice = {
-  id: 'INV-2026-89241',
-  orderId: 'SB-89241',
-  customer: 'Dr. Aminul Islam',
-  address: 'House 42, Road 11, Banani, Dhaka',
-  paymentMethod: 'Cash on Delivery',
-  paymentStatus: 'Pending',
-  createdAt: '2026-11-09',
-  items: [
-    { name: 'Napa Extra', quantity: 2, unitPrice: 35 },
-    { name: 'Seclo 20mg', quantity: 1, unitPrice: 70 },
-  ],
-  subtotal: 140,
-  deliveryFee: 60,
-  total: 200,
-};
+import { api } from '../../services/api';
 
 export default function Invoice() {
   const { id } = useParams();
-  const savedOrder = getDemoOrders().find((entry) => entry.id === id);
-  const order = savedOrder || (id === defaultInvoice.orderId ? defaultInvoice : null);
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.orders.invoice(id)
+      .then(setOrder)
+      .catch((requestError) => setError(requestError.message))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return <p role="status" className="p-12 text-center text-sm text-slate-600">Loading invoice…</p>;
+  }
 
   if (!order) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center">
         <h1 className="text-2xl font-bold text-slate-900">Invoice not found</h1>
-        <p className="mt-2 text-slate-600">There is no invoice for this order in the current demo account.</p>
+        <p className="mt-2 text-slate-600">{error || 'There is no invoice for this order in your account.'}</p>
         <Link to="/products" className="mt-5 inline-flex rounded-xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white">Browse medicines</Link>
       </div>
     );
   }
 
-  const items = order.items || defaultInvoice.items;
-  const subtotal = order.subtotal ?? items.reduce((sum, item) => sum + item.quantity * (item.price || item.unitPrice), 0);
-  const deliveryFee = order.shippingFee ?? defaultInvoice.deliveryFee;
-  const total = order.total ?? subtotal + deliveryFee;
+  const items = order.items;
+  const subtotal = order.subtotal;
+  const deliveryFee = order.deliveryFee;
+  const total = order.total;
   const address = typeof order.address === 'string'
     ? order.address
     : [order.address?.street, order.address?.city, order.address?.postalCode].filter(Boolean).join(', ');
@@ -72,8 +68,8 @@ export default function Invoice() {
 
           <div className="text-left md:text-right">
             <p className="text-sm text-slate-500">Invoice No.</p>
-            <p className="text-xl font-bold text-slate-900">{order.id || defaultInvoice.id}</p>
-            <p className="mt-1 text-sm text-slate-500">Issued on {new Date(order.createdAt || defaultInvoice.createdAt).toLocaleDateString()}</p>
+            <p className="text-xl font-bold text-slate-900">{order.invoiceNo}</p>
+            <p className="mt-1 text-sm text-slate-500">Issued on {new Date(order.issuedAt).toLocaleDateString()}</p>
           </div>
         </div>
 
@@ -81,13 +77,13 @@ export default function Invoice() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Bill to</p>
             <p className="mt-3 font-bold text-slate-900">{order.customer || 'Dr. Aminul Islam'}</p>
-            <p className="text-sm text-slate-600">{address || defaultInvoice.address}</p>
+            <p className="text-sm text-slate-600">{address}</p>
           </div>
 
           <div className="md:text-right">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Payment</p>
-            <p className="mt-3 text-sm text-slate-600">Method: {order.paymentMethod || defaultInvoice.paymentMethod}</p>
-            <p className="text-sm text-slate-600">Status: {order.paymentStatus || defaultInvoice.paymentStatus}</p>
+            <p className="mt-3 text-sm text-slate-600">Method: {order.paymentMethod}</p>
+            <p className="text-sm text-slate-600">Status: {order.paymentStatus}</p>
           </div>
         </div>
 
@@ -102,7 +98,7 @@ export default function Invoice() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white">
-              {(items || defaultInvoice.items).map((item) => (
+              {items.map((item) => (
                 <tr key={item.name}>
                   <td className="px-4 py-3 text-sm text-slate-800">{item.name}</td>
                   <td className="px-4 py-3 text-sm text-slate-600">{item.quantity}</td>

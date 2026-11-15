@@ -1,0 +1,231 @@
+erDiagram
+    roles ||--o{ users : "has"
+    users ||--o| notification_settings : "has"
+    users ||--o{ addresses : "owns"
+    users ||--o| sellers : "is"
+    users ||--o| doctors : "is"
+    users ||--o{ carts : "has"
+    users ||--o{ prescriptions : "uploads"
+    users ||--o{ orders : "places"
+    users ||--o{ appointments : "books"
+    users ||--o{ notifications : "receives"
+    users ||--o{ consultation_messages : "sends"
+
+    sellers ||--o{ products : "lists"
+    sellers ||--o{ orders : "fulfils"
+    categories ||--o{ categories : "parent of"
+    categories ||--o{ products : "groups"
+    products ||--o{ product_images : "has"
+    products ||--o{ cart_items : "in"
+    products ||--o{ order_items : "in"
+
+    carts ||--o{ cart_items : "contains"
+
+    coupons ||--o{ orders : "applied to"
+    addresses ||--o{ orders : "ships to"
+    orders ||--|{ order_items : "contains"
+    orders ||--o{ order_status_history : "tracks"
+    orders ||--o| deliveries : "has"
+    orders ||--o{ payments : "paid by"
+    orders ||--o| invoices : "has"
+    orders ||--o{ order_prescriptions : "uses"
+    prescriptions ||--o{ order_prescriptions : "used in"
+    delivery_fee_rules ||--o{ deliveries : "prices"
+
+    doctors ||--o{ doctor_specialities : "has"
+    specialities ||--o{ doctor_specialities : "tagged"
+    doctors ||--o{ doctor_documents : "submits"
+    doctors ||--o{ doctor_availability : "offers"
+    doctors ||--o{ appointments : "receives"
+    appointments ||--o| consultations : "becomes"
+    consultations ||--o{ consultation_messages : "has"
+    appointments ||--o| doctor_reviews : "rated by"
+
+    users {
+        bigint id PK
+        smallint role_id FK
+        varchar full_name
+        varchar email UK
+        varchar phone UK
+        text password_hash
+        boolean is_active
+    }
+    roles {
+        smallint id PK
+        varchar name UK
+    }
+    notification_settings {
+        bigint user_id PK
+        boolean email_reminders
+        boolean sms_reminders
+    }
+    addresses {
+        bigint id PK
+        bigint user_id FK
+        text address_line
+        numeric latitude
+        numeric longitude
+        boolean is_default
+    }
+    sellers {
+        bigint id PK
+        bigint user_id FK
+        varchar pharmacy_name
+        varchar drug_license_no UK
+        numeric latitude
+        numeric longitude
+        enum status
+    }
+    categories {
+        int id PK
+        int parent_id FK
+        varchar name UK
+    }
+    products {
+        bigint id PK
+        bigint seller_id FK
+        int category_id FK
+        varchar name
+        numeric price
+        int stock_qty
+        boolean requires_prescription
+    }
+    product_images {
+        bigint id PK
+        bigint product_id FK
+        text image_url
+    }
+    coupons {
+        int id PK
+        varchar code UK
+        enum discount_type
+        numeric discount_value
+    }
+    carts {
+        bigint id PK
+        bigint user_id FK
+        enum status
+        timestamptz updated_at
+    }
+    cart_items {
+        bigint cart_id PK
+        bigint product_id PK
+        int quantity
+    }
+    prescriptions {
+        bigint id PK
+        bigint customer_id FK
+        text file_url
+        enum status
+        bigint reviewed_by FK
+    }
+    orders {
+        bigint id PK
+        bigint customer_id FK
+        bigint seller_id FK
+        bigint address_id FK
+        int coupon_id FK
+        enum status
+        numeric total_amt
+    }
+    order_items {
+        bigint id PK
+        bigint order_id FK
+        bigint product_id FK
+        int quantity
+        numeric unit_price
+    }
+    order_status_history {
+        bigint id PK
+        bigint order_id FK
+        enum status
+        timestamptz changed_at
+    }
+    order_prescriptions {
+        bigint order_id PK
+        bigint prescription_id PK
+    }
+    delivery_fee_rules {
+        int id PK
+        numeric min_km
+        numeric max_km
+        numeric fee
+    }
+    deliveries {
+        bigint id PK
+        bigint order_id FK
+        numeric distance_km
+        int fee_rule_id FK
+        enum status
+    }
+    payments {
+        bigint id PK
+        bigint order_id FK
+        enum method
+        enum status
+        varchar transaction_id UK
+    }
+    invoices {
+        bigint id PK
+        bigint order_id FK
+        varchar invoice_no UK
+    }
+    doctors {
+        bigint id PK
+        bigint user_id FK
+        varchar bmdc_reg_no UK
+        numeric consultation_fee
+        enum status
+    }
+    specialities {
+        int id PK
+        varchar name UK
+    }
+    doctor_specialities {
+        bigint doctor_id PK
+        int speciality_id PK
+    }
+    doctor_documents {
+        bigint id PK
+        bigint doctor_id FK
+        varchar doc_type
+        text file_url
+    }
+    doctor_availability {
+        bigint id PK
+        bigint doctor_id FK
+        smallint weekday
+        enum period
+        time start_time
+    }
+    appointments {
+        bigint id PK
+        bigint patient_id FK
+        bigint doctor_id FK
+        date slot_date
+        enum period
+        enum status
+    }
+    consultations {
+        bigint id PK
+        bigint appointment_id FK
+        text medical_notes
+    }
+    consultation_messages {
+        bigint id PK
+        bigint consultation_id FK
+        bigint sender_id FK
+        text body
+        text attachment_url
+    }
+    doctor_reviews {
+        bigint id PK
+        bigint appointment_id FK
+        smallint rating
+    }
+    notifications {
+        bigint id PK
+        bigint user_id FK
+        varchar type
+        boolean is_read
+    }

@@ -1,7 +1,7 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ClipboardList, PackageCheck } from 'lucide-react';
-import { useAuth } from '../../context/authState';
-import { getDemoOrders } from '../../data/orders';
+import { api } from '../../services/api';
 
 function getStatusStyle(status) {
   if (status === 'Delivered') return 'bg-emerald-100 text-emerald-700';
@@ -12,10 +12,16 @@ function getStatusStyle(status) {
 }
 
 export default function OrderHistory() {
-  const { user } = useAuth();
-  const orders = getDemoOrders()
-    .filter((order) => user.role === 'admin' || order.customerEmail === user.email)
-    .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt));
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    api.orders.list()
+      .then(({ orders: savedOrders }) => setOrders(savedOrders))
+      .catch((requestError) => setError(requestError.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
@@ -25,7 +31,11 @@ export default function OrderHistory() {
         <p className="mt-2 text-sm text-slate-600">View order updates, follow delivery progress, and open your invoices.</p>
       </div>
 
-      {orders.length === 0 ? (
+      {loading ? (
+        <p role="status" className="rounded-2xl bg-white p-8 text-center text-sm text-slate-600">Loading orders…</p>
+      ) : error ? (
+        <p role="alert" className="rounded-2xl bg-rose-50 p-5 text-sm text-rose-700">{error}</p>
+      ) : orders.length === 0 ? (
         <section className="rounded-3xl border border-slate-200 bg-white px-6 py-14 text-center shadow-xs">
           <ClipboardList className="mx-auto h-12 w-12 text-teal-700" />
           <h2 className="mt-4 text-xl font-bold text-slate-900">No orders yet</h2>

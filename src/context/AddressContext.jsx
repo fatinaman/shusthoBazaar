@@ -1,50 +1,41 @@
-import { useMemo, useState } from 'react';
-
+import { useEffect, useMemo, useState } from 'react';
 import { AddressContext } from './addressState';
-const STORAGE_KEY = 'shusthobazaar_addresses';
-const demoAddresses = [
-  {
-    id: 'addr-home',
-    label: 'Home',
-    recipient: 'Aminul Islam',
-    phone: '01712345678',
-    street: 'House 42, Road 11, Banani',
-    city: 'Dhaka',
-    postalCode: '1213',
-  },
-];
-
-function getStoredAddresses() {
-  if (typeof window === 'undefined') return [];
-
-  try {
-    const addresses = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null');
-    return Array.isArray(addresses) ? addresses : demoAddresses;
-  } catch (error) {
-    console.error('Unable to restore saved delivery addresses.', error);
-    window.localStorage.removeItem(STORAGE_KEY);
-    return [];
-  }
-}
+import { useAuth } from './authState';
+import { api } from '../services/api';
 
 export function AddressProvider({ children }) {
-  const [addresses, setAddresses] = useState(getStoredAddresses);
+  const { user } = useAuth();
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [error, setError] = useState('');
 
+  useEffect(() => {
+    let active = true;
+    if (user?.role !== 'customer') return undefined;
+    api.addresses.list()
+      .then(({ addresses }) => {
+        if (active) {
+          setSavedAddresses(addresses);
+          setError('');
+        }
+      })
+      .catch((requestError) => { if (active) setError(requestError.message); });
+    return () => { active = false; };
+  }, [user?.id, user?.role]);
+
+  const addresses = useMemo(
+    () => user?.role === 'customer' ? savedAddresses : [],
+    [user?.role, savedAddresses],
+  );
   const value = useMemo(() => ({
     addresses,
-    addAddress(address) {
-      const savedAddress = { ...address, id: `addr-${Date.now()}` };
-      const updated = [savedAddress, ...addresses];
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      setAddresses(updated);
-      return savedAddress;
+    error,
+    async addAddress(address) {
+      const previousIds = new Set(addresses.map((entry) => entry.id));
+      const { addresses: nextAddresses } = await api.addresses.add(address);
+      setSavedAddresses(nextAddresses);
+      return nextAddresses.find((entry) => !previousIds.has(entry.id)) || nextAddresses[0];
     },
-    removeAddress(id) {
-      const updated = addresses.filter((address) => address.id !== id);
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      setAddresses(updated);
-    },
-  }), [addresses]);
+  }), [addresses, error]);
 
   return <AddressContext.Provider value={value}>{children}</AddressContext.Provider>;
 }

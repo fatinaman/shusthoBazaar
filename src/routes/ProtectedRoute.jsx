@@ -8,9 +8,12 @@ const homeByRole = {
 };
 
 export default function ProtectedRoute({ allowedRoles, children }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
 
+  if (loading) {
+    return <div className="p-8 text-center text-sm text-slate-600" role="status">Loading your account…</div>;
+  }
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

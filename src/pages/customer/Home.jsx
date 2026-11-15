@@ -22,7 +22,7 @@ const quickActions = [
 ];
 
 export default function Home() {
-  const { products } = useProducts();
+  const { products, loading, error } = useProducts();
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -94,11 +94,17 @@ export default function Home() {
           </Link>
         </div>
 
+        {error ? (
+          <p role="alert" className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{error}</p>
+        ) : loading ? (
+          <p role="status" className="text-sm text-slate-600">Loading medicines…</p>
+        ) : (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {products.filter((product) => product.isAvailable && product.stock > 0).slice(0, 4).map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
+        )}
       </section>
 
       <section className="mt-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">

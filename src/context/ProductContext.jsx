@@ -1,26 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { initialProducts } from '../data/seed';
 import { ProductContext } from './productState';
-
-const STORAGE_KEY = 'shusthobazaar_products';
-
-function getStoredProducts() {
-  try {
-    const products = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null');
-    return Array.isArray(products) ? products : initialProducts;
-  } catch (error) {
-    console.error('Unable to restore the saved product catalogue.', error);
-    window.localStorage.removeItem(STORAGE_KEY);
-    return initialProducts;
-  }
-}
+import { api } from '../services/api';
 
 export function ProductProvider({ children }) {
-  const [products, setProducts] = useState(getStoredProducts);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
-  }, [products]);
+    let active = true;
+    api.products.list({ limit: 100 })
+      .then(({ products: catalogue }) => {
+        if (active) setProducts(catalogue);
+      })
+      .catch((requestError) => {
+        if (active) setError(requestError.message);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
 
   const saveProduct = useCallback((product) => {
     setProducts((current) => {
@@ -43,10 +43,12 @@ export function ProductProvider({ children }) {
 
   const value = useMemo(() => ({
     products,
+    loading,
+    error,
     saveProduct,
     removeProduct,
     toggleProductAvailability,
-  }), [products, saveProduct, removeProduct, toggleProductAvailability]);
+  }), [products, loading, error, saveProduct, removeProduct, toggleProductAvailability]);
 
   return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;
 }
