@@ -8,13 +8,13 @@ const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'shusthobazaar-
 process.env.DB_PATH = path.join(temporaryDirectory, 'test.sqlite');
 process.env.JWT_SECRET = 'test-secret-with-more-than-thirty-two-characters';
 
-const [{ app }, { seed }, { closeDatabase }] = await Promise.all([
-  import('../src/app.js'),
+const [{ createApp }, { seed }, { closeDatabase }] = await Promise.all([
+  import('../src/app.ts'),
   import('../db/seed.js'),
   import('../db/index.js'),
 ]);
 
-let server;
+let app;
 let baseUrl;
 let customerCookie;
 
@@ -29,14 +29,14 @@ async function login(email = 'customer@shusthobazaar.demo', password = 'Customer
 
 before(async () => {
   seed();
-  server = app.listen(0);
-  await new Promise((resolve) => server.once('listening', resolve));
-  baseUrl = `http://127.0.0.1:${server.address().port}`;
+  app = await createApp();
+  await app.listen(0, '127.0.0.1');
+  baseUrl = `http://127.0.0.1:${app.getHttpServer().address().port}`;
   customerCookie = await login();
 });
 
 after(async () => {
-  await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  await app.close();
   closeDatabase();
   fs.rmSync(temporaryDirectory, { recursive: true, force: true });
 });

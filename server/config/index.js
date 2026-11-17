@@ -2,7 +2,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 
-const serverDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const runtimeDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const serverDirectory = path.basename(runtimeDirectory) === 'dist'
+  ? path.dirname(runtimeDirectory)
+  : runtimeDirectory;
 dotenv.config({ path: path.resolve(serverDirectory, '../.env') });
 
 export const config = {

@@ -1,6 +1,6 @@
 # ShusthoBazaar
 
-A React/Vite medicine marketplace with an Express API and SQLite persistence. The current payment option is a **local mock only**: it records a chosen success or failure in SQLite and does not contact a payment gateway or move real money.
+A React/Vite medicine marketplace with a TypeScript NestJS API and SQLite persistence. The current payment option is a **local mock only**: it records a chosen success or failure in SQLite and does not contact a payment gateway or move real money.
 
 ## Setup and run
 
@@ -19,12 +19,13 @@ npm run db:reset
 npm run dev:full
 ```
 
-The Vite frontend runs at `http://localhost:5173` and proxies `/api` requests to Express at `http://localhost:3001`. Other useful commands:
+The Vite frontend runs at `http://localhost:5173` and proxies `/api` requests to NestJS at `http://localhost:3001`. Other useful commands:
 
 | Command | Purpose |
 |---|---|
 | `npm run dev` | Frontend only |
-| `npm run server:dev` | Express with nodemon |
+| `npm run server:dev` | NestJS API in TypeScript watch mode |
+| `npm --prefix server run build` | Compile the API to `server/dist` |
 | `npm run db:reset` | Delete the configured local database, migrate, and reseed |
 | `npm --prefix server test` | Run API/database integration tests |
 | `npm run lint` | Lint frontend and server |
@@ -38,7 +39,7 @@ Copy `.env.example` to `.env`. `.env` is ignored by Git.
 
 | Variable | Purpose | Default |
 |---|---|---|
-| `PORT` | Express port | `3001` |
+| `PORT` | API port | `3001` |
 | `CLIENT_URL` | Allowed browser origin for CORS | `http://localhost:5173` |
 | `SERVER_URL` | API base URL | `http://localhost:3001` |
 | `JWT_SECRET` | JWT signing secret (required) | — |
@@ -108,7 +109,7 @@ SQLite foreign keys and WAL mode are enabled on the server connection. Seed data
 ├── server/
 │   ├── config/
 │   ├── db/                 # SQLite schema, migration, seed and reset
-│   └── src/                # Express routes, middleware and services
+│   └── src/                # NestJS controllers, guards and TypeScript API
 ├── src/
 │   ├── components/
 │   ├── context/            # API-backed auth, catalogue, cart and addresses

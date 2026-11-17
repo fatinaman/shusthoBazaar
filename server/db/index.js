@@ -4,7 +4,10 @@ import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
 import { config } from '../config/index.js';
 
-const serverDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const runtimeDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const serverDirectory = path.basename(runtimeDirectory) === 'dist'
+  ? path.dirname(runtimeDirectory)
+  : runtimeDirectory;
 const schemaPath = path.join(serverDirectory, 'db/schema.sql');
 const resolvedDbPath = path.resolve(config.dbPath);
 fs.mkdirSync(path.dirname(resolvedDbPath), { recursive: true });
