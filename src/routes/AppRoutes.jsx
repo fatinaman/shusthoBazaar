@@ -21,12 +21,17 @@ import PrescriptionVerification from '../pages/seller/PrescriptionVerification';
 import AdminDashboard from '../pages/AdminDashboard';
 import ProtectedRoute from './ProtectedRoute';
 
+import AnalyticsReports from '../pages/admin/AnalyticsReports';
+import AdminControlPanel from '../pages/admin/AdminControlPanel';
+
 export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><AnalyticsReports /></ProtectedRoute>} />
+        <Route path="/admin/manage" element={<ProtectedRoute allowedRoles={['admin']}><AdminControlPanel /></ProtectedRoute>} />
         <Route element={<CustomerLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<ProductCatalog />} />

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, Users } from 'lucide-react';
+import { BarChart3, FileCheck, LayoutDashboard, Package, ShieldCheck, ShoppingCart, Users } from 'lucide-react';
 import { useAuth } from '../context/authState';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,6 +7,9 @@ const links = [
   { label: 'Seller overview', detail: 'View marketplace activity and seller metrics.', to: '/seller/dashboard', icon: LayoutDashboard },
   { label: 'Product catalogue', detail: 'Review and maintain the demo medicine inventory.', to: '/seller/products', icon: Package },
   { label: 'Order operations', detail: 'Review incoming customer orders and their status.', to: '/seller/orders', icon: ShoppingCart },
+  { label: 'Prescription queue', detail: 'See prescription reviews across every pharmacy.', to: '/seller/prescriptions', icon: FileCheck },
+  { label: 'Analytics & reports', detail: 'Sales trends, conversion funnel, and CSV exports.', to: '/admin/analytics', icon: BarChart3 },
+  { label: 'Verification & governance', detail: 'Verify sellers/doctors, manage coupons, and moderate reviews.', to: '/admin/manage', icon: ShieldCheck },
 ];
 
 export default function AdminDashboard() {
@@ -38,7 +41,7 @@ export default function AdminDashboard() {
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
           Explore the separate seller demo tools from one place. This prototype uses local browser storage and has no real user accounts.
         </p>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
           {links.map(({ label, detail, to, icon: Icon }) => (
             <Link key={to} to={to} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-md">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
